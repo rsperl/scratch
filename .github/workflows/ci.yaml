@@ -41,7 +41,8 @@ jobs:
       - name: super-linter
         uses: super-linter/super-linter@v8.5.0
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # for updating status
+          # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_ALL_CODEBASE: true
           DEFAULT_BRANCH: main
 
