@@ -50,14 +50,14 @@ jobs:
       - name: Run unit tests
         run: |
           mkdir -p cov/unit
-          GOCOVERDIR=cov/unit go test -v -race -coverpkg=./lib ./lib/...
+          go test -count=1 -v -race -coverpkg=./lib ./lib/... -args -test.gocoverdir="$PWD/cov/unit"
         continue-on-error: false
 
       # Run integration tests with coverage
       - name: Run integration tests
         run: |
           mkdir -p cov/integration
-          GOCOVERDIR=cov/integration go test -v -race -coverpkg=./lib ./tests/integration/...
+          go test -count=1 -v -race -coverpkg=./lib ./tests/integration/... -args -test.gocoverdir="$PWD/cov/integration"
         continue-on-error: false
 
       # Combine coverage reports
