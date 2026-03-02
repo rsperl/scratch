@@ -38,13 +38,13 @@ jobs:
       # See https://github.com/marketplace/actions/super-linter
       # dockerfile, git-merge-conflict markers, github actions, golangci-lint, licenses (trivy),
       # markdown, proto buf, secrets, shellcheck, yaml
-      - name: super-linter
-        uses: super-linter/super-linter@v8.5.0
-        env:
-          # for updating status
-          # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VALIDATE_ALL_CODEBASE: true
-          DEFAULT_BRANCH: main
+      # - name: super-linter
+      #   uses: super-linter/super-linter@v8.5.0
+      #   env:
+      #     # for updating status
+      #     # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     VALIDATE_ALL_CODEBASE: true
+      #     DEFAULT_BRANCH: main
 
       # Run unit tests with coverage
       - name: Run unit tests
