@@ -93,12 +93,7 @@ jobs:
             exit 1
           fi
 
-      # Upload coverage to artifacts (optional)
-      - name: Upload coverage reports
-        uses: actions/upload-artifact@v4
-        if: always()
+      - name: check test coverage
+        uses: vladopajic/go-test-coverage@v2
         with:
-          name: coverage-reports
-          path: |
-            cov/merged
-            coverage.out
+          config: ./.testcoverage.yml
