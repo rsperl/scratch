@@ -17,8 +17,9 @@ on:
       - main
       - release-*
 jobs:
-  workflow-arke:
-    runs-on: golang:1.25.7-trixie
+  workflow-scratch:
+    runs-on: ubuntu-latest
+    container: golang:1.24.5
     permissions:
       contents: write
       id-token: write
@@ -43,3 +44,60 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_ALL_CODEBASE: true
           DEFAULT_BRANCH: main
+
+      # Run unit tests with coverage
+      - name: Run unit tests
+        run: |
+          mkdir -p cov/unit
+          GOCOVERDIR=cov/unit go test -v -race -coverpkg=./lib ./lib/...
+        continue-on-error: false
+
+      # Run integration tests with coverage
+      - name: Run integration tests
+        run: |
+          mkdir -p cov/integration
+          GOCOVERDIR=cov/integration go test -v -race -coverpkg=./lib ./tests/integration/...
+        continue-on-error: false
+
+      # Combine coverage reports
+      - name: Combine coverage reports
+        run: |
+          mkdir -p cov/merged
+          go tool covdata merge -i=cov/unit,cov/integration -o=cov/merged
+          go tool covdata textfmt -i=cov/merged -o=coverage.out
+
+      # Display coverage summary
+      - name: Display coverage summary
+        run: |
+          echo "========================================"
+          echo "Coverage Summary"
+          echo "========================================"
+          go tool covdata percent -i=cov/merged
+          echo "========================================"
+
+      # Evaluate coverage threshold
+      - name: Evaluate coverage threshold
+        run: |
+          COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
+          THRESHOLD=70.0
+          echo "Total Coverage: ${COVERAGE}%"
+          echo "Threshold: ${THRESHOLD}%"
+
+          # Use awk for floating point comparison
+          if awk -v cov="$COVERAGE" -v thr="$THRESHOLD" 'BEGIN {exit !(cov >= thr)}'; then
+            echo "✅ Coverage ${COVERAGE}% meets threshold of ${THRESHOLD}%"
+            exit 0
+          else
+            echo "❌ Coverage ${COVERAGE}% is below threshold of ${THRESHOLD}%"
+            exit 1
+          fi
+
+      # Upload coverage to artifacts (optional)
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-reports
+          path: |
+            cov/merged
+            coverage.out
