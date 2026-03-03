@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+docker run \
+	--rm \
+	-e RUN_LOCAL=true \
+	-v $PWD:/tmp/lint \
+	--platform linux/amd64 \
+	--env-file ./.linter.env \
+	ghcr.io/super-linter/super-linter:latest | tee super-lint.log
+

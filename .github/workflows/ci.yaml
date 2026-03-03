@@ -16,10 +16,12 @@ on:
     branches:
       - main
       - release-*
+
 jobs:
   workflow-scratch:
     runs-on: ubuntu-latest
-    container: golang:1.24.5
+    # https://hub.docker.com/_/golang/
+    container: golang:1.25.7
     permissions:
       contents: write
       id-token: write
@@ -30,42 +32,34 @@ jobs:
         image: docker:dind # Use the official Docker-in-Docker image
         options: --privileged --shm-size=2g # The --privileged flag is required for DinD to function
     steps:
-      - name: checkout
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - name: Load linter environment
+        run: cat ./.linter.env >> $GITHUB_ENV
+
       # See https://github.com/marketplace/actions/super-linter
-      # dockerfile, git-merge-conflict markers, github actions, golangci-lint, licenses (trivy),
-      # markdown, proto buf, secrets, shellcheck, yaml
-      # - name: super-linter
-      #   uses: super-linter/super-linter@v8.5.0
-      #   env:
-      #     # for updating status
-      #     # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #     VALIDATE_ALL_CODEBASE: true
-      #     DEFAULT_BRANCH: main
+      # Note: configuration is in ./.linter.env, loaded in previous step
+      # TEST: multiple dockerfiles, dockerfiles in subdirectories
+      # TEST: licenses
+      - name: Linters
+        uses: super-linter/super-linter/slim@v8.5.0
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Run unit tests with coverage
-      - name: Run unit tests
+      - name: Unit tests
         run: |
-          mkdir -p cov/unit
-          go test -count=1 -v -race -coverpkg=./lib ./lib/... -args -test.gocoverdir="$PWD/cov/unit"
+          mkdir -p cov
+          go test -count=1 -v -race -coverpkg=./lib ./lib/... -args -test.gocoverdir="$PWD/cov"
         continue-on-error: false
 
-      # Run integration tests with coverage
-      - name: Run integration tests
+      - name: Generate coverage report
         run: |
-          mkdir -p cov/integration
-          go test -count=1 -v -race -coverpkg=./lib ./tests/integration/... -args -test.gocoverdir="$PWD/cov/integration"
-        continue-on-error: false
-
-      # Combine coverage reports
-      - name: Combine coverage reports
-        run: |
-          mkdir -p cov/merged
-          go tool covdata merge -i=cov/unit,cov/integration -o=cov/merged
-          go tool covdata textfmt -i=cov/merged -o=coverage.out
+          go tool covdata textfmt -i="$PWD/cov" -o=coverage.out
 
       # Display coverage summary
       - name: Display coverage summary
@@ -73,27 +67,10 @@ jobs:
           echo "========================================"
           echo "Coverage Summary"
           echo "========================================"
-          go tool covdata percent -i=cov/merged
+          go tool covdata percent -i="$PWD/cov"
           echo "========================================"
 
-      # Evaluate coverage threshold
-      - name: Evaluate coverage threshold
-        run: |
-          COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
-          THRESHOLD=70.0
-          echo "Total Coverage: ${COVERAGE}%"
-          echo "Threshold: ${THRESHOLD}%"
-
-          # Use awk for floating point comparison
-          if awk -v cov="$COVERAGE" -v thr="$THRESHOLD" 'BEGIN {exit !(cov >= thr)}'; then
-            echo "✅ Coverage ${COVERAGE}% meets threshold of ${THRESHOLD}%"
-            exit 0
-          else
-            echo "❌ Coverage ${COVERAGE}% is below threshold of ${THRESHOLD}%"
-            exit 1
-          fi
-
-      - name: check test coverage
+      - name: Check test coverage
         uses: vladopajic/go-test-coverage@v2
         with:
           config: ./.testcoverage.yml

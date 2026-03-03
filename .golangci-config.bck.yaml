@@ -1,0 +1,39 @@
+# https://golangci-lint.run/docs/configuration/file/
+
+---
+# version: "2"
+linters:
+  # Disable all linters.
+  disable-all: true
+  # Enable specific linter
+  enable:
+    - bodyclose
+    - copyloopvar
+    - dogsled
+    - dupl
+    - errcheck
+    - exhaustive
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - gofmt
+    - goimports
+    - goprintffuncname
+    - gosec
+    - govet
+    - ineffassign
+    - misspell
+    - nakedret
+    - noctx
+    - nolintlint
+    - revive
+    - sqlclosecheck
+    - staticcheck
+    - stylecheck
+    - unconvert
+    - unparam
+    - wastedassign
+    - whitespace
+    - gci
+    - typecheck
