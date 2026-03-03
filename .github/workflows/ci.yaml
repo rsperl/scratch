@@ -72,6 +72,14 @@ jobs:
         uses: ludeeus/action-shellcheck@master
         continue-on-error: true
 
+      # https://github.com/gitleaks/gitleaks-action
+      # Get free license key from https://gitleaks.io/
+      - name: Check for secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # Only required for Organizations, not personal accounts.
+
       # calling once here to populate the cache, and then skipping setup in the trivy-action step to save time
       - name: Manual Trivy Setup
         uses: aquasecurity/setup-trivy@v0.2.0
