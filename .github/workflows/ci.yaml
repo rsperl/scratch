@@ -194,7 +194,7 @@ jobs:
           echo "${steps.check-coverage.outputs.stderr}" > artifacts/check-coverage-results.stderr
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         with:
           name: ci-artifacts
           retention-days: 7
