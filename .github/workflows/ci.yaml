@@ -55,9 +55,10 @@ jobs:
         continue-on-error: true
 
       - name: Lint markdown files
-        uses: actions/markdownlint@v1
+        uses: avto-dev/markdown-lint@v1
         with:
-          config_file: ./.markdown-lint.yml
+          args: ./
+          config: ./.markdown-lint.yml
         continue-on-error: true
 
       - name: Lint dockerfile
