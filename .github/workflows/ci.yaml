@@ -92,6 +92,7 @@ jobs:
           go tool covdata percent -i="$PWD/cov"
           echo "========================================"
 
+      # https://github.com/vladopajic/go-test-coverage/blob/main/README.md#configuration
       - name: Check test coverage
         uses: vladopajic/go-test-coverage@v2
         with:
