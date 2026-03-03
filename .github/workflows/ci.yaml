@@ -47,38 +47,72 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Create artifact directory
+        run: mkdir -p artifacts
+
+      # https://golangci-lint.run/docs/welcome/install/ci/
       - name: Lint go files
+        id: lint-go-files
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.10
+          version: v2.10.1
           args: --config=./.golangci-config.yaml
         continue-on-error: true
 
+      - name: Create artifact for lint-go-files
+        run: |
+          echo "${steps.lint-go-files.outputs.stdout}" > artifacts/golangci-lint-results.stdout
+          echo "${steps.lint-go-files.outputs.stderr}" > artifacts/golangci-lint-results.stderr
+
       - name: Lint markdown files
+        id: lint-markdown
         uses: avto-dev/markdown-lint@v1
         with:
           args: ./
           config: ./.markdown-lint.yml
         continue-on-error: true
 
+      - name: Create artifact for lint-markdown
+        run: |
+          echo "${steps.lint-markdown.outputs.stdout}" > artifacts/markdown-lint-results.stdout
+          echo "${steps.lint-markdown.outputs.stderr}" > artifacts/markdown-lint-results.stderr
+
       - name: Lint dockerfile
+        id: lint-dockerfile
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: ./tests/integration/Dockerfile.a
         continue-on-error: true
 
+      - name: Create artifact for lint-dockerfile
+        run: |
+          echo "${steps.lint-dockerfile.outputs.stdout}" > artifacts/hadolint-results.stdout
+          echo "${steps.lint-dockerfile.outputs.stderr}" > artifacts/hadolint-results.stderr
+
       # https://github.com/marketplace/actions/shellcheck
       - name: Lint shell scripts
+        id: lint-shell
         uses: ludeeus/action-shellcheck@master
         continue-on-error: true
+
+      - name: Create artifact for lint-shell
+        run: |
+          echo "${steps.lint-shell.outputs.stdout}" > artifacts/shellcheck-results.stdout
+          echo "${steps.lint-shell.outputs.stderr}" > artifacts/shellcheck-results.stderr
 
       # https://github.com/gitleaks/gitleaks-action
       # Get free license key from https://gitleaks.io/
       - name: Check for secrets
+        id: gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # Only required for Organizations, not personal accounts.
+
+      - name: Create artifact for gitleaks
+        run: |
+          echo "${steps.gitleaks.outputs.stdout}" > artifacts/gitleaks-results.stdout
+          echo "${steps.gitleaks.outputs.stderr}" > artifacts/gitleaks-results.stderr
 
       # calling once here to populate the cache, and then skipping setup in the trivy-action step to save time
       - name: Manual Trivy Setup
@@ -94,7 +128,7 @@ jobs:
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
           format: 'table'
-          output: 'trivy-results.txt'
+          output: 'artifacts/trivy-vuln-results.txt'
           skip-setup-trivy: true
           exit-code: 1
           trivy-config: ./.trivy.yaml
@@ -111,7 +145,7 @@ jobs:
           severity: 'CRITICAL,HIGH,UNKNOWN'
           ignore-unfixed: true
           format: 'table'
-          output: 'trivy-results.txt'
+          output: 'artifacts/trivy-license-results.txt'
           skip-setup-trivy: true
           exit-code: 1
           trivy-config: ./.trivy.yaml
@@ -122,31 +156,53 @@ jobs:
       # the results
       - name: Run govulncheck
         run: |
-          go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+          go run golang.org/x/vuln/cmd/govulncheck@latest ./... 2>&1 | tee artifacts/govulncheck-results.txt
+        continue-on-error: true
 
 
       # Run unit tests with coverage
       - name: Unit tests
         run: |
           mkdir -p cov
-          go test -count=1 -v -race -coverpkg=./lib ./lib/... -args -test.gocoverdir="$PWD/cov"
+          go test -count=1 -v -race -coverpkg=./lib ./lib/... -args -test.gocoverdir="$PWD/cov" 2>&1 | tee artifacts/go-test-output.txt
         continue-on-error: false
 
       - name: Generate coverage report
         run: |
-          go tool covdata textfmt -i="$PWD/cov" -o=coverage.out
+          go tool covdata textfmt -i="$PWD/cov" -o=artifacts/coverage.out
 
       # Display coverage summary
       - name: Display coverage summary
         run: |
-          echo "========================================"
-          echo "Coverage Summary"
-          echo "========================================"
-          go tool covdata percent -i="$PWD/cov"
-          echo "========================================"
+          echo "========================================" | tee artifacts/go-test-coverage-summary.txt
+          echo "Coverage Summary"                         | tee -a artifacts/go-test-coverage-summary.txt
+          echo "========================================" | tee -a artifacts/go-test-coverage-summary.txt
+          go tool covdata percent -i="$PWD/cov"      2>&1 | tee -a artifacts/go-test-coverage-summary.txt
+          echo "========================================" | tee -a artifacts/go-test-coverage-summary.txt
 
       # https://github.com/vladopajic/go-test-coverage/blob/main/README.md#configuration
       - name: Check test coverage
+        id: check-coverage
         uses: vladopajic/go-test-coverage@v2
         with:
           config: ./.testcoverage.yml
+        continue-on-error: true
+
+      - name: Create artifact for check-coverage
+        run: |
+          echo "${steps.check-coverage.outputs.stdout}" > artifacts/check-coverage-results.stdout
+          echo "${steps.check-coverage.outputs.stderr}" > artifacts/check-coverage-results.stderr
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ci-artifacts
+          retention-days: 7
+          if-no-files-found: ignore
+          path: artifacts/*
+
+      - name: Check for failure
+        if: ${{ failure() }}
+        run: |
+          echo "One or more steps failed. Check the workflow output and artifacts for details."
+          exit 1
