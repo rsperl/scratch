@@ -38,7 +38,7 @@ jobs:
           fetch-depth: 0
 
       - name: Load linter environment
-        run: cat ./.linter.env >> $GITHUB_ENV
+        run: grep '^[A-Z]' ./.linter.env >> $GITHUB_ENV
 
       # See https://github.com/marketplace/actions/super-linter
       # Note: configuration is in ./.linter.env, loaded in previous step
