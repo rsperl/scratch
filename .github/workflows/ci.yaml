@@ -26,6 +26,9 @@ jobs:
       id-token: write
     env:
       GOMEMLIMIT: 2GiB
+      TRIVY_SKIP_DB_UPDATE: true
+      TRIVY_SKIP_JAVA_DB_UPDATE: true
+
     services:
       docker:
         image: docker:dind # Use the official Docker-in-Docker image
@@ -51,6 +54,12 @@ jobs:
           args: --config=./.golangci-config.yaml
         continue-on-error: true
 
+      - name: Lint markdown files
+        uses: actions/markdownlint@v1
+        with:
+          config_file: ./.markdown-lint.yml
+        continue-on-error: true
+
       - name: Lint dockerfile
         uses: hadolint/hadolint-action@v3.1.0
         with:
@@ -62,13 +71,48 @@ jobs:
       - name: Lint license check
         uses: joeig/go-licenses-action@v1
         with:
-          # For types, see https://github.com/google/licenseclassifier/blob/e6a9bb99b5a6f71d5a34336b8245e305f5430f99/license_type.go
           disallowed-types: 'forbidden,unknown'
         continue-on-error: true
 
       # https://github.com/marketplace/actions/shellcheck
       - name: Lint shell scripts
         uses: ludeeus/action-shellcheck@master
+        continue-on-error: true
+
+      # calling once here to populate the cache, and then skipping setup in the trivy-action step to save time
+      - name: Manual Trivy Setup
+        uses: aquasecurity/setup-trivy@v0.2.0
+        with:
+          cache: true
+          version: v0.69.2
+
+      - name: Check for vulnerabilities
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          format: 'table'
+          output: 'trivy-results.txt'
+          skip-setup-trivy: true
+          exit-code: 1
+          trivy-config: ./.trivy.yaml
+        continue-on-error: true
+
+      # License types https://github.com/google/licenseclassifier/blob/e6a9bb99b5a6f71d5a34336b8245e305f5430f99/license_type.go
+      # https://trivy.dev/docs/latest/guide/scanner/license/
+      - name: Check for vulnerabilities and license violations
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'repos'
+          scanners: 'vuln,license'
+          severity: 'CRITICAL,HIGH,UNKNOWN'
+          ignore-unfixed: true
+          format: 'table'
+          output: 'trivy-results.txt'
+          skip-setup-trivy: true
+          exit-code: 1
+          trivy-config: ./.trivy.yaml
         continue-on-error: true
 
 
