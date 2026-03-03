@@ -21,7 +21,6 @@ jobs:
   workflow-scratch:
     runs-on: ubuntu-latest
     # https://hub.docker.com/_/golang/
-    container: golang:1.25.7
     permissions:
       contents: write
       id-token: write
@@ -31,24 +30,43 @@ jobs:
       docker:
         image: docker:dind # Use the official Docker-in-Docker image
         options: --privileged --shm-size=2g # The --privileged flag is required for DinD to function
+
     steps:
-      - name: Checkout
+
+      # https://github.com/actions/setup-go
+      - name: Setup go
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.25.7
+
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Load linter environment
-        run: grep '^[A-Z]' ./.linter.env >> $GITHUB_ENV
+      - name: Lint go files
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.10
+          args: --config=./.golangci-config.yaml
 
-      # See https://github.com/marketplace/actions/super-linter
-      # Note: configuration is in ./.linter.env, loaded in previous step
-      # TEST: multiple dockerfiles, dockerfiles in subdirectories
-      # TEST: licenses
-      - name: Linters
-        uses: super-linter/super-linter/slim@v8.5.0
-        continue-on-error: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Lint dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: ./tests/integration/Dockerfile.a
+
+      # https://github.com/joeig/go-licenses-action?tab=readme-ov-file
+      # TODO: configure allowed/disallowed licenses, and test that it works
+      - name: Lint license check
+        uses: joeig/go-licenses-action@v1
+        with:
+          # For types, see https://github.com/google/licenseclassifier/blob/e6a9bb99b5a6f71d5a34336b8245e305f5430f99/license_type.go
+          disallowed-types: 'forbidden,unknown'
+
+      # https://github.com/marketplace/actions/shellcheck
+      - name: Lint shell scripts
+        uses: ludeeus/action-shellcheck@master
+
 
       # Run unit tests with coverage
       - name: Unit tests
