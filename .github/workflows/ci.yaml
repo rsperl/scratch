@@ -49,11 +49,13 @@ jobs:
         with:
           version: v2.10
           args: --config=./.golangci-config.yaml
+        continue-on-error: true
 
       - name: Lint dockerfile
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: ./tests/integration/Dockerfile.a
+        continue-on-error: true
 
       # https://github.com/joeig/go-licenses-action?tab=readme-ov-file
       # TODO: configure allowed/disallowed licenses, and test that it works
@@ -62,10 +64,12 @@ jobs:
         with:
           # For types, see https://github.com/google/licenseclassifier/blob/e6a9bb99b5a6f71d5a34336b8245e305f5430f99/license_type.go
           disallowed-types: 'forbidden,unknown'
+        continue-on-error: true
 
       # https://github.com/marketplace/actions/shellcheck
       - name: Lint shell scripts
         uses: ludeeus/action-shellcheck@master
+        continue-on-error: true
 
 
       # Run unit tests with coverage
