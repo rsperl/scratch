@@ -67,14 +67,6 @@ jobs:
           dockerfile: ./tests/integration/Dockerfile.a
         continue-on-error: true
 
-      # https://github.com/joeig/go-licenses-action?tab=readme-ov-file
-      # TODO: configure allowed/disallowed licenses, and test that it works
-      - name: Lint license check
-        uses: joeig/go-licenses-action@v1
-        with:
-          disallowed-types: 'forbidden,unknown'
-        continue-on-error: true
-
       # https://github.com/marketplace/actions/shellcheck
       - name: Lint shell scripts
         uses: ludeeus/action-shellcheck@master
@@ -102,6 +94,7 @@ jobs:
 
       # License types https://github.com/google/licenseclassifier/blob/e6a9bb99b5a6f71d5a34336b8245e305f5430f99/license_type.go
       # https://trivy.dev/docs/latest/guide/scanner/license/
+      # TODO: are these license categories sufficient
       - name: Check for vulnerabilities and license violations
         uses: aquasecurity/trivy-action@master
         with:
