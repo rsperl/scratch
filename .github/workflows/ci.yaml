@@ -117,6 +117,13 @@ jobs:
           trivy-config: ./.trivy.yaml
         continue-on-error: true
 
+      # https://github.com/golang/govulncheck-action
+      # This is probably redundant with the trivy scan, but it will be nice to compare
+      # the results
+      - name: Run govulncheck
+        run: |
+          go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+
 
       # Run unit tests with coverage
       - name: Unit tests
