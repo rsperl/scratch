@@ -61,8 +61,8 @@ jobs:
 
       - name: Create artifact for lint-go-files
         run: |
-          echo "${steps.lint-go-files.outputs.stdout}" > artifacts/golangci-lint-results.stdout
-          echo "${steps.lint-go-files.outputs.stderr}" > artifacts/golangci-lint-results.stderr
+          echo "${{steps.lint-go-files.outputs.stdout}}" > artifacts/golangci-lint-results.stdout
+          echo "${{steps.lint-go-files.outputs.stderr}}" > artifacts/golangci-lint-results.stderr
 
       - name: Lint markdown files
         id: lint-markdown
@@ -74,8 +74,8 @@ jobs:
 
       - name: Create artifact for lint-markdown
         run: |
-          echo "${steps.lint-markdown.outputs.stdout}" > artifacts/markdown-lint-results.stdout
-          echo "${steps.lint-markdown.outputs.stderr}" > artifacts/markdown-lint-results.stderr
+          echo "${{steps.lint-markdown.outputs.stdout}}" > artifacts/markdown-lint-results.stdout
+          echo "${{steps.lint-markdown.outputs.stderr}}" > artifacts/markdown-lint-results.stderr
 
       - name: Lint dockerfile
         id: lint-dockerfile
@@ -86,8 +86,8 @@ jobs:
 
       - name: Create artifact for lint-dockerfile
         run: |
-          echo "${steps.lint-dockerfile.outputs.stdout}" > artifacts/hadolint-results.stdout
-          echo "${steps.lint-dockerfile.outputs.stderr}" > artifacts/hadolint-results.stderr
+          echo "${{steps.lint-dockerfile.outputs.stdout}}" > artifacts/hadolint-results.stdout
+          echo "${{steps.lint-dockerfile.outputs.stderr}}" > artifacts/hadolint-results.stderr
 
       # https://github.com/marketplace/actions/shellcheck
       - name: Lint shell scripts
@@ -97,8 +97,8 @@ jobs:
 
       - name: Create artifact for lint-shell
         run: |
-          echo "${steps.lint-shell.outputs.stdout}" > artifacts/shellcheck-results.stdout
-          echo "${steps.lint-shell.outputs.stderr}" > artifacts/shellcheck-results.stderr
+          echo "${{steps.lint-shell.outputs.stdout}}" > artifacts/shellcheck-results.stdout
+          echo "${{steps.lint-shell.outputs.stderr}}" > artifacts/shellcheck-results.stderr
 
       # https://github.com/gitleaks/gitleaks-action
       # Get free license key from https://gitleaks.io/
@@ -111,8 +111,8 @@ jobs:
 
       - name: Create artifact for gitleaks
         run: |
-          echo "${steps.gitleaks.outputs.stdout}" > artifacts/gitleaks-results.stdout
-          echo "${steps.gitleaks.outputs.stderr}" > artifacts/gitleaks-results.stderr
+          echo "${{steps.gitleaks.outputs.stdout}}" > artifacts/gitleaks-results.stdout
+          echo "${{steps.gitleaks.outputs.stderr}}" > artifacts/gitleaks-results.stderr
 
       # calling once here to populate the cache, and then skipping setup in the trivy-action step to save time
       - name: Manual Trivy Setup
@@ -190,8 +190,8 @@ jobs:
 
       - name: Create artifact for check-coverage
         run: |
-          echo "${steps.check-coverage.outputs.stdout}" > artifacts/check-coverage-results.stdout
-          echo "${steps.check-coverage.outputs.stderr}" > artifacts/check-coverage-results.stderr
+          echo "${{steps.check-coverage.outputs.stdout}}" > artifacts/check-coverage-results.stdout
+          echo "${{steps.check-coverage.outputs.stderr}}" > artifacts/check-coverage-results.stderr
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v5
