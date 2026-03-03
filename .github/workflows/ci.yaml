@@ -105,7 +105,7 @@ jobs:
       - name: Check for vulnerabilities and license violations
         uses: aquasecurity/trivy-action@master
         with:
-          scan-type: 'repos'
+          scan-type: repo
           scanners: 'vuln,license'
           severity: 'CRITICAL,HIGH,UNKNOWN'
           ignore-unfixed: true
