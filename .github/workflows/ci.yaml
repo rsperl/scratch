@@ -71,7 +71,7 @@ jobs:
         id: lint-markdown
         uses: avto-dev/markdown-lint@v1
         with:
-          args: --config "$ARTIFACT_DIR/markdown-lint-results.txt" ./
+          args: --output "$ARTIFACT_DIR/markdown-lint-results.txt" ./
           config: ./.markdown-lint.yml
         continue-on-error: true
 
