@@ -77,8 +77,13 @@ jobs:
 
       - name: Show markdown lint results
         if: steps.lint-markdown.outcome == 'failure'
-        run: cat "${{ env.ARTIFACT_DIR }}/markdown-lint-results.txt"
-
+        run: |-
+          if [[ -f "${{ env.ARTIFACT_DIR }}/markdown-lint-results.txt" ]]; then
+            echo "Markdown linting issues found:"
+            cat "${{ env.ARTIFACT_DIR }}/markdown-lint-results.txt"
+          else
+            echo "Found linting issues but no results file was generated."
+          fi
 
       # https://github.com/hadolint/hadolint-action
       # Note this has to be called multiple times for multiple dockerfiles
