@@ -51,7 +51,7 @@ jobs:
           fetch-depth: 0
 
       - name: Create artifact directory
-        run: mkdir -p artifacts
+        run: mkdir -p ${{ env.ARTIFACT_DIR}}
 
 
       # https://golangci-lint.run/docs/welcome/install/ci/
@@ -71,13 +71,13 @@ jobs:
         id: lint-markdown
         uses: avto-dev/markdown-lint@v1
         with:
-          args: --output "$ARTIFACT_DIR/markdown-lint-results.txt" ./
+          args: --output "${{ env.ARTIFACT_DIR }}/markdown-lint-results.txt" ./
           config: ./.markdown-lint.yml
         continue-on-error: true
 
       - name: Show markdown lint results
         if: steps.lint-markdown.outcome == 'failure'
-        run: cat "$ARTIFACT_DIR/markdown-lint-results.txt"
+        run: cat "${{ env.ARTIFACT_DIR }}/markdown-lint-results.txt"
 
 
       # https://github.com/hadolint/hadolint-action
@@ -87,14 +87,14 @@ jobs:
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: ./tests/integration/Dockerfile.a
-          output-file: "$ARTIFACT_DIR/hadolint-Dockerfile.a.txt"
+          output-file: "${{ env.ARTIFACT_DIR }}/hadolint-Dockerfile.a.txt"
           failure-threshold: error
           no-fail: true
         continue-on-error: true
 
       - name: Show hadolint results
         if: steps.lint-dockerfile.outcome == 'failure'
-        run: cat "$ARTIFACT_DIR/hadolint-Dockerfile.a.txt"
+        run: cat "${{ env.ARTIFACT_DIR }}/hadolint-Dockerfile.a.txt"
 
 
       # https://github.com/marketplace/actions/shellcheck
@@ -141,7 +141,7 @@ jobs:
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
           format: 'table'
-          output: "$ARTIFACT_DIR/trivy-vuln-results.txt"
+          output: "${{ env.ARTIFACT_DIR }}/trivy-vuln-results.txt"
           skip-setup-trivy: true
           exit-code: 1
           trivy-config: ./.trivy.yaml
@@ -158,7 +158,7 @@ jobs:
           severity: 'CRITICAL,HIGH,UNKNOWN'
           ignore-unfixed: true
           format: 'table'
-          output: "$ARTIFACT_DIR/trivy-license-results.txt"
+          output: "${{ env.ARTIFACT_DIR }}/trivy-license-results.txt"
           skip-setup-trivy: true
           exit-code: 1
           trivy-config: ./.trivy.yaml
@@ -169,7 +169,7 @@ jobs:
       # the results
       - name: Run govulncheck
         run: |
-          go run golang.org/x/vuln/cmd/govulncheck@latest ./... 2>&1 | tee "$ARTIFACT_DIR/govulncheck-results.txt"
+          go run golang.org/x/vuln/cmd/govulncheck@latest ./... 2>&1 | tee "${{ env.ARTIFACT_DIR }}/govulncheck-results.txt"
         continue-on-error: true
 
 
@@ -177,17 +177,17 @@ jobs:
       - name: Unit tests
         run: |
           mkdir -p cov
-          go test -count=1 -v -race -coverpkg=./lib ./lib/... -args -test.gocoverdir="$PWD/cov" 2>&1 | tee "$ARTIFACT_DIR/go-test-output.txt"
+          go test -count=1 -v -race -coverpkg=./lib ./lib/... -args -test.gocoverdir="$PWD/cov" 2>&1 | tee "${{ env.ARTIFACT_DIR }}/go-test-output.txt"
         continue-on-error: false
 
       - name: Generate coverage report
         run: |
-          go tool covdata textfmt -i="$PWD/cov" -o="$ARTIFACT_DIR/coverage.out"
+          go tool covdata textfmt -i="$PWD/cov" -o="${{ env.ARTIFACT_DIR }}/coverage.out"
 
       # Display coverage summary
       - name: Display coverage summary
         run: |
-          go tool covdata percent -i="$PWD/cov" 2>&1 | tee -a "$ARTIFACT_DIR/go-test-coverage-summary.txt"
+          go tool covdata percent -i="$PWD/cov" 2>&1 | tee -a "${{ env.ARTIFACT_DIR }}/go-test-coverage-summary.txt"
 
 
       # https://github.com/vladopajic/go-test-coverage/blob/main/docs/github_action.md
@@ -225,7 +225,7 @@ jobs:
           name: ci-artifacts
           retention-days: 7
           if-no-files-found: ignore
-          path: $ARTIFACT_DIR/*
+          path: ${{ env.ARTIFACT_DIR }}/*
 
       - name: Check for failure
         if: ${{ failure() }}
