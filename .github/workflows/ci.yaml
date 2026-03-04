@@ -226,7 +226,7 @@ jobs:
           name: ci-artifacts
           retention-days: 7
           if-no-files-found: ignore
-          path: "$ARTIFACT_DIR"/*
+          path: $ARTIFACT_DIR/*
 
       - name: Check for failure
         if: ${{ failure() }}
