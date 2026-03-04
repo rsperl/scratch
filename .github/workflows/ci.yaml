@@ -71,9 +71,8 @@ jobs:
         id: lint-markdown
         uses: avto-dev/markdown-lint@v1
         with:
-          args: ./
+          args: --config "$ARTIFACT_DIR/markdown-lint-results.txt" ./
           config: ./.markdown-lint.yml
-          output: "$ARTIFACT_DIR/markdown-lint-results.txt"
         continue-on-error: true
 
       - name: Show markdown lint results
@@ -88,14 +87,14 @@ jobs:
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: ./tests/integration/Dockerfile.a
-          output: "$ARTIFACT_DIR/hadolint-Dockerfile.a.txt"
+          output-file: "$ARTIFACT_DIR/hadolint-Dockerfile.a.txt"
           failure-threshold: error
           no-fail: true
         continue-on-error: true
 
       - name: Show hadolint results
         if: steps.lint-dockerfile.outcome == 'failure'
-        run: cat "$ARTIFACT_DIR/hadolint-results.txt"
+        run: cat "$ARTIFACT_DIR/hadolint-Dockerfile.a.txt"
 
 
       # https://github.com/marketplace/actions/shellcheck
