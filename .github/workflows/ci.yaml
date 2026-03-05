@@ -5,6 +5,9 @@ on:
     branches:
       - main
       - release-*
+
+  workflow_dispatch:
+
   pull_request:
     types:
       # Default PR events + ready_for_review
@@ -81,12 +84,14 @@ jobs:
       # Note: This does not check for style, only syntax errors :(
       - name: Lint dockerfile
         id: lint-dockerfile
-        uses: hadolint/hadolint-action@v3.1.0
-        with:
-          dockerfile: ./tests/integration/Dockerfile.a
-          failure-threshold: error
-          no-fail: true
-        continue-on-error: true
+        run: |-
+          curl -sL -o ./hadolint "https://github.com/hadolint/hadolint/releases/latest/download/hadolint-Linux-x86_64"
+          chmod +x ./hadolint
+          for file in $(git ls-files | grep Dockerfile || true); do
+            echo "=== Linting $file"
+            ./hadolint "$file" --failure-threshold error
+            echo ""
+          done 2>&1 | tee ${{ env.ARTIFACT_DIR }}/hadolint-results.txt
 
       # https://github.com/marketplace/actions/shellcheck
       # Note: only checks for syntax errors, not style issues
@@ -99,10 +104,10 @@ jobs:
           wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${scversion?}/shellcheck-${scversion?}.linux.x86_64.tar.xz" | tar -xJv
           cp shellcheck-${scversion}/shellcheck ./shellcheck
 
-          for file in $(find . -type f -name "*.sh"); do
+          for file in $(git ls-files | grep "\.sh$"); do
             echo "Linting $file"
             shfmt -d  "$file"
-            ./shellcheck
+            ./shellcheck "$file"
             echo ""
           done 2>&1
         continue-on-error: true
@@ -176,7 +181,7 @@ jobs:
         run: |
           mkdir -p ${{ env.COV_DIR }}
           # Note that cov dir has to be absolute path since each package test runs from the pkg directory
-          go test -count=1 -v -race -coverpkg=./lib ./lib/... -args -test.gocoverdir=$PWD/${{ env.COV_DIR }} 2>&1 | \
+          go test -count=1 -v -race -coverpkg=./... ./... -args -test.gocoverdir=$PWD/${{ env.COV_DIR }} 2>&1 | \
             tee ${{ env.ARTIFACT_DIR }}/go-test-output.txt
         continue-on-error: false
 
