@@ -118,7 +118,7 @@ jobs:
 
       - name: Run yamllint
         run: |
-          yamllint -c ${{ env.LINT_DIR }}/yamllint.yml . | tee ${{ env.ARTIFACT_DIR }}/yamllint-results.txt || true
+          yamllint -c yamllint.yml . | tee ${{ env.ARTIFACT_DIR }}/yamllint-results.txt || true
         continue-on-error: true
 
       # https://github.com/gitleaks/gitleaks-action
@@ -130,7 +130,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # Only required for Organizations, not personal accounts.
-          GITLEAKS_CONFIG: ./gitleaks-config.toml
+          GITLEAKS_CONFIG: gitleaks-config.toml
           GITLEAKS_ENABLE_COMMENTS: true
         continue-on-error: true
 
