@@ -61,7 +61,8 @@ jobs:
       - name: Lint go files
         id: lint-go-files
         run: |-
-          go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.10.1 run --config=${{ env.LINT_DIR }}/golangci-config.yaml --out-format=github-actions ./... 2>&1 | tee ${{ env.ARTIFACT_DIR }}/golangci-lint-results.txt || true
+          go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.10.1 2> ${{ env.ARTIFACT_DIR }}/golangci-lint-install-log.txt
+          golangci-lint run --config=${{ env.LINT_DIR }}/golangci-config.yaml --out-format=github-actions ./... 2>&1 | tee ${{ env.ARTIFACT_DIR }}/golangci-lint-results.txt || true
         continue-on-error: true
 
 
@@ -92,7 +93,7 @@ jobs:
       - name: Lint shell scripts
         id: lint-shell
         run: |-
-          go install mvdan.cc/sh/v3@latest
+          go install mvdan.cc/sh/v3/cmd/shfmt@latest 2> ${{ env.ARTIFACT_DIR }}/shfmt-install-log.txt
 
           scversion="stable"
           wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${scversion?}/shellcheck-${scversion?}.linux.x86_64.tar.xz" | tar -xJv
@@ -108,7 +109,7 @@ jobs:
 
       - name: Run yamllint
         run: |
-          yamllint -c yamllint.yml . | tee ${{ env.ARTIFACT_DIR }}/yamllint-results.txt || true
+          yamllint -c yamllint.yml .
         continue-on-error: true
 
       # https://github.com/gitleaks/gitleaks-action
@@ -117,7 +118,8 @@ jobs:
       - name: Check for secrets
         id: gitleaks
         run: |-
-          go run github.com/zricethezav/gitleaks/v8@v8.30.0 git --config ./.github/linters/gitleaks-config.toml -v
+          go install github.com/zricethezav/gitleaks/v8/cmd/gitleaks@v8.30.0 2> ${{ env.ARTIFACT_DIR }}/gitleaks-install-log.txt
+          gitleaks git --config ./.github/linters/gitleaks-config.toml -v
         continue-on-error: true
 
 
@@ -164,7 +166,8 @@ jobs:
       # the results
       - name: Run govulncheck
         run: |
-          go run golang.org/x/vuln/cmd/govulncheck@latest ./... 2>&1 | tee ${{ env.ARTIFACT_DIR }}/govulncheck-results.txt
+          go install golang.org/x/vuln/cmd/govulncheck@latest 2> ${{ env.ARTIFACT_DIR }}/govulncheck-install-log.txt
+          govulncheck ./... 2>&1 | tee ${{ env.ARTIFACT_DIR }}/govulncheck-results.txt
         continue-on-error: true
 
 
@@ -192,7 +195,8 @@ jobs:
       - name: Check test coverage
         id: check-coverage
         run: |-
-          go run github.com/vladopajic/go-test-coverage/v2@latest --config=${{ env.LINT_DIR }}/testcoverage.yml
+          go install github.com/vladopajic/go-test-coverage/v2/cmd/go-test-coverage@latest 2> ${{ env.ARTIFACT_DIR }}/go-test-coverage-install-log.txt
+          go-test-coverage --config=${{ env.LINT_DIR }}/testcoverage.yml
         continue-on-error: true
 
       - name: Post coverage report
