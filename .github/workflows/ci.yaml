@@ -62,7 +62,7 @@ jobs:
         id: lint-go-files
         run: |-
           go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.10.1 2> ${{ env.ARTIFACT_DIR }}/golangci-lint-install-log.txt
-          golangci-lint run --config=${{ env.LINT_DIR }}/golangci-config.yaml --out-format=github-actions ./... 2>&1 | tee ${{ env.ARTIFACT_DIR }}/golangci-lint-results.txt || true
+          golangci-lint run --config=${{ env.LINT_DIR }}/golangci-config.yaml ./...
         continue-on-error: true
 
 
@@ -72,7 +72,7 @@ jobs:
         id: lint-markdown
         uses: avto-dev/markdown-lint@v1
         with:
-          args:  ./
+          args: ./
           config: ${{ env.LINT_DIR }}/markdown-lint.yml
         continue-on-error: true
 
@@ -190,12 +190,11 @@ jobs:
           go tool covdata percent -i=${{ env.COV_DIR }} 2>&1 | tee -a ${{ env.ARTIFACT_DIR }}/go-test-coverage-summary.txt
 
 
-      # https://github.com/vladopajic/go-test-coverage/blob/main/docs/github_action.md
       # https://github.com/vladopajic/go-test-coverage/blob/main/README.md#configuration
       - name: Check test coverage
         id: check-coverage
         run: |-
-          go install github.com/vladopajic/go-test-coverage/v2/cmd/go-test-coverage@latest 2> ${{ env.ARTIFACT_DIR }}/go-test-coverage-install-log.txt
+          go install github.com/vladopajic/go-test-coverage/v2@latest 2> ${{ env.ARTIFACT_DIR }}/go-test-coverage-install-log.txt
           go-test-coverage --config=${{ env.LINT_DIR }}/testcoverage.yml
         continue-on-error: true
 
