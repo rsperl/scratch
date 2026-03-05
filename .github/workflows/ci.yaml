@@ -99,15 +99,19 @@ jobs:
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: ./tests/integration/Dockerfile.a
-          output-file: ${{ env.ARTIFACT_DIR }}/hadolint-Dockerfile.a.txt
           failure-threshold: error
           no-fail: true
         continue-on-error: true
 
       - name: Show hadolint results
         if: steps.lint-dockerfile.outcome == 'failure'
-        run: cat ${{ env.ARTIFACT_DIR }}/hadolint-Dockerfile.a.txt
-
+        run: |-
+          echo ${{ env.HADOLINT_RESULTS }} > ${{ env.ARTIFACT_DIR }}/hadolint-Dockerfile.a.txt
+          cat ${{ env.ARTIFACT_DIR }}/hadolint-Dockerfile.a.txt
+          if [[ -n "${{ env.HADOLINT_RESULTS }}" ]]; then
+            echo "Hadolint issues found in Dockerfile.a:"
+            exit 1
+          fi
 
       # https://github.com/marketplace/actions/shellcheck
       # Note: only checks for syntax errors, not style issues
