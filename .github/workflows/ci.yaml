@@ -52,6 +52,18 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Get PR number using gh CLI
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER=$(gh pr list --state closed --json number,mergeCommit --jq '.[] | select(.mergeCommit.oid == "${{ github.sha }}") | .number')
+          if [[ -n "$PR_NUMBER" ]]; then
+            echo "PR number: $PR_NUMBER"
+            echo "pr_id=$PR_NUMBER" >> $GITHUB_ENV
+          else
+            echo "No PR found for commit ${{ github.sha }}"
+          fi
+
       - name: Create artifact directory
         run: mkdir -p ${{ env.ARTIFACT_DIR}}
 
@@ -132,18 +144,6 @@ jobs:
           cache: true
           version: v0.69.2
 
-      - name: Find pull request ID
-        run: |
-            PR_DATA=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-              https://api.github.com/repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:${{ github.ref_name }}&state=open)
-            PR_ID=$(echo "$PR_DATA" | jq -r '.[0].number')
-
-            if [ "$PR_ID" != "null" ]; then
-              echo "pull_request_id=$PR_ID" >> $GITHUB_ENV
-            else
-              echo "No open pull request found for this branch."
-            fi
-
       - name: Check for vulnerabilities
         uses: aquasecurity/trivy-action@master
         with:
@@ -179,6 +179,7 @@ jobs:
       # the results
       - name: Run govulncheck
         run: |
+          echo "PR: ${{ env.pr_id }}"
           go run golang.org/x/vuln/cmd/govulncheck@latest ./... 2>&1 | tee ${{ env.ARTIFACT_DIR }}/govulncheck-results.txt
         continue-on-error: true
 
@@ -207,18 +208,18 @@ jobs:
         id: check-coverage
         uses: vladopajic/go-test-coverage@v2
         with:
-          config: ${{ env.LINT_DIR }}/.testcoverage.yml
+          config: ${{ env.LINT_DIR }}/testcoverage.yml
         continue-on-error: true
 
 
 
       - name: Post coverage report
-        if: env.pull_request_id
+        if: env.pr_id != null
         uses: thollander/actions-comment-pull-request@v3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           comment-tag: coverage-report
-          pr-number: ${{ env.pull_request_id }}
+          pr-number: ${{ env.pr_id }}
           message: |
             go-test-coverage report:
             ```

@@ -1,1 +1,5 @@
 FROM ubuntu:lastest
+
+run echo "lowercase directive"
+
+  ENV HAS_SPACE=true
