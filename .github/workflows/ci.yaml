@@ -56,10 +56,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          PR_NUMBER=$(gh pr list --state closed --json number,mergeCommit --jq '.[] | select(.mergeCommit.oid == "${{ github.sha }}") | .number')
+          PR_NUMBER=$(gh pr list --search ${{ github.sha }} --json number --jq '.[0] // {}.number')
+          echo "pr_id=$PR_NUMBER" >> $GITHUB_ENV
           if [[ -n "$PR_NUMBER" ]]; then
             echo "PR number: $PR_NUMBER"
-            echo "pr_id=$PR_NUMBER" >> $GITHUB_ENV
           else
             echo "No PR found for commit ${{ github.sha }}"
           fi
@@ -211,10 +211,8 @@ jobs:
           config: ${{ env.LINT_DIR }}/testcoverage.yml
         continue-on-error: true
 
-
-
       - name: Post coverage report
-        if: env.pr_id != null
+        if: env.pr_id != ''
         uses: thollander/actions-comment-pull-request@v3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
