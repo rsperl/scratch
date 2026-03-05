@@ -119,7 +119,7 @@ jobs:
         id: gitleaks
         run: |-
           go install github.com/zricethezav/gitleaks/v8/cmd/gitleaks@v8.30.0 2> ${{ env.ARTIFACT_DIR }}/gitleaks-install-log.txt
-          gitleaks git --config ./.github/linters/gitleaks-config.toml -v
+          gitleaks detect --config ./.github/linters/gitleaks-config.toml -v
         continue-on-error: true
 
 
