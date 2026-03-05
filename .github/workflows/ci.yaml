@@ -93,7 +93,7 @@ jobs:
 
       # https://github.com/hadolint/hadolint-action
       # Note this has to be called multiple times for multiple dockerfiles
-      # This does not check for style, only syntax errors :(
+      # Note: This does not check for style, only syntax errors :(
       - name: Lint dockerfile
         id: lint-dockerfile
         uses: hadolint/hadolint-action@v3.1.0
@@ -110,6 +110,7 @@ jobs:
 
 
       # https://github.com/marketplace/actions/shellcheck
+      # Note: only checks for syntax errors, not style issues
       - name: Lint shell scripts
         id: lint-shell
         uses: ludeeus/action-shellcheck@master
