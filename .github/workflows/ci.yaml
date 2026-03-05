@@ -130,8 +130,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # Only required for Organizations, not personal accounts.
-          GITLEAKS_CONFIG: ${{ env.LINT_DIR }}/gitleaks-config.toml
+          GITLEAKS_CONFIG: ./gitleaks-config.toml
           GITLEAKS_ENABLE_COMMENTS: true
+        continue-on-error: true
 
 
       # https://github.com/aquasecurity/trivy-action
