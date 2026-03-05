@@ -1,0 +1,2 @@
+./README.md:1 error MD041/first-line-heading/first-line-h1 First line in a file should be a top-level heading [Context: "Missing a title"]
+README.md:1 error MD041/first-line-heading/first-line-h1 First line in a file should be a top-level heading [Context: "Missing a title"]
