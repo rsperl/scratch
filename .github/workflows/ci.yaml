@@ -18,8 +18,9 @@ on:
       - release-*
 env:
   GO_VERSION: 1.25.7
-  ARTIFACT_DIR: artifacts
+  ARTIFACT_DIR: ./artifacts
   LINT_DIR: ./.github/linters
+  COV_DIR: ./artifacts/cov
 
 jobs:
   workflow-scratch:
@@ -187,19 +188,19 @@ jobs:
       # Run unit tests with coverage
       - name: Unit tests
         run: |
-          mkdir -p ${{ env.ARTIFACT_DIR }}/cov
-          go test -count=1 -v -race -coverpkg=./lib ./lib/... -args -test.gocoverdir=${{ env.ARTIFACT_DIR }}/cov 2>&1 | \
+          mkdir -p ${{ env.COV_DIR }}
+          go test -count=1 -v -race -coverpkg=./lib ./lib/... -args -test.gocoverdir=${{ env.COV_DIR }} 2>&1 | \
             tee ${{ env.ARTIFACT_DIR }}/go-test-output.txt
         continue-on-error: false
 
       - name: Generate coverage report
         run: |
-          go tool covdata textfmt -i=${{ env.ARTIFACT_DIR }}/cov -o=${{ env.ARTIFACT_DIR }}/coverage.out
+          go tool covdata textfmt -i=${{ env.COV_DIR }} -o=${{ env.ARTIFACT_DIR }}/coverage.out
 
       # Display coverage summary
       - name: Display coverage summary
         run: |
-          go tool covdata percent -i=${{ env.ARTIFACT_DIR }}/cov 2>&1 | tee -a ${{ env.ARTIFACT_DIR }}/go-test-coverage-summary.txt
+          go tool covdata percent -i=${{ env.COV_DIR }} 2>&1 | tee -a ${{ env.ARTIFACT_DIR }}/go-test-coverage-summary.txt
 
 
       # https://github.com/vladopajic/go-test-coverage/blob/main/docs/github_action.md
