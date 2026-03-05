@@ -109,7 +109,7 @@ jobs:
 
       - name: Run yamllint
         run: |
-          yamllint -c yamllint.yml .
+          yamllint -c .github/linters/yamllint.yml .
         continue-on-error: true
 
       # https://github.com/gitleaks/gitleaks-action
@@ -198,16 +198,6 @@ jobs:
           go-test-coverage --config=${{ env.LINT_DIR }}/testcoverage.yml
         continue-on-error: true
 
-      - name: Post coverage report
-        if: github.event_name == 'pull_request'
-        uses: thollander/actions-comment-pull-request@v3
-        with:
-          github-token: ${{ secrets.GH_TOKEN }}
-          comment-tag: coverage-report
-          message: |
-            go-test-coverage report:
-            ```
-            ${{ fromJSON(steps.check-coverage.outputs.report) }}```
 
       - name: "Evaluate coverage result"
         if: steps.check-coverage.outcome == 'failure'
