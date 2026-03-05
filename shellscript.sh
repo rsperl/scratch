@@ -1,4 +1,4 @@
-# No shebang
+#!/usr/bin/env bash
 
 a=1
 

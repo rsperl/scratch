@@ -53,18 +53,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get PR number using gh CLI
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          PR_NUMBER=$(gh pr list --search $(git rev-parse --short HEAD) --json number --jq '.[0] // {}.number')
-          echo "pr_id=$PR_NUMBER" >> $GITHUB_ENV
-          if [[ -n "$PR_NUMBER" ]]; then
-            echo "PR number: $PR_NUMBER"
-          else
-            echo "No PR found for commit ${{ github.sha }}"
-          fi
-
       - name: Create artifact directory
         run: mkdir -p ${{ env.ARTIFACT_DIR}}
 
@@ -105,6 +93,7 @@ jobs:
 
       # https://github.com/hadolint/hadolint-action
       # Note this has to be called multiple times for multiple dockerfiles
+      # This does not check for style, only syntax errors :(
       - name: Lint dockerfile
         id: lint-dockerfile
         uses: hadolint/hadolint-action@v3.1.0
@@ -127,14 +116,22 @@ jobs:
         continue-on-error: true
 
 
+      - name: Run yamllint
+        run: |
+          yamllint -c ${{ env.LINT_DIR }}/yamllint.yml . | tee ${{ env.ARTIFACT_DIR }}/yamllint-results.txt || true
+        continue-on-error: true
+
       # https://github.com/gitleaks/gitleaks-action
-      # Get free license key from https://gitleaks.io/
+      # license key applie for from https://gitleaks.io/
+      # BUG: this does not find secrets in cmd/main.go
       - name: Check for secrets
         id: gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # Only required for Organizations, not personal accounts.
+          GITLEAKS_CONFIG: ${{ env.LINT_DIR }}/gitleaks-config.toml
+          GITLEAKS_ENABLE_COMMENTS: true
 
 
       # https://github.com/aquasecurity/trivy-action
@@ -213,12 +210,11 @@ jobs:
         continue-on-error: true
 
       - name: Post coverage report
-        if: env.pr_id != ''
+        if: github.event_name == 'pull_request'
         uses: thollander/actions-comment-pull-request@v3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           comment-tag: coverage-report
-          pr-number: ${{ env.pr_id }}
           message: |
             go-test-coverage report:
             ```
