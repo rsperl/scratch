@@ -7,3 +7,4 @@ echo $a
 
   # should be formatted
 	echo "hello world"
+if

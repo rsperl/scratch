@@ -58,14 +58,10 @@ jobs:
 
 
       # https://golangci-lint.run/docs/welcome/install/ci/
-      # https://github.com/golangci/golangci-lint-action
       - name: Lint go files
         id: lint-go-files
-        uses: golangci/golangci-lint-action@v9
-        with:
-          version: v2.10.1
-          problem-matchers: true
-          args: --config=${{ env.LINT_DIR }}/golangci-config.yaml
+        run: |-
+          go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.10.1 run --config=${{ env.LINT_DIR }}/golangci-config.yaml --out-format=github-actions ./... 2>&1 | tee ${{ env.ARTIFACT_DIR }}/golangci-lint-results.txt || true
         continue-on-error: true
 
 
@@ -95,7 +91,19 @@ jobs:
       # Note: only checks for syntax errors, not style issues
       - name: Lint shell scripts
         id: lint-shell
-        uses: ludeeus/action-shellcheck@master
+        run: |-
+          go install mvdan.cc/sh/v3@latest
+
+          scversion="stable"
+          wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${scversion?}/shellcheck-${scversion?}.linux.x86_64.tar.xz" | tar -xJv
+          cp shellcheck-${scversion}/shellcheck ./shellcheck
+
+          for file in $(find . -type f -name "*.sh"); do
+            echo "Linting $file"
+            shfmt -d  "$file"
+            ./shellcheck
+            echo ""
+          done 2>&1
         continue-on-error: true
 
       - name: Run yamllint
@@ -108,10 +116,6 @@ jobs:
       # BUG: this does not find "password" in cmd/main.go
       - name: Check for secrets
         id: gitleaks
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-          GITLEAKS_CONFIG: gitleaks-config.toml
-          GITLEAKS_ENABLE_COMMENTS: true
         run: |-
           go run github.com/zricethezav/gitleaks/v8@v8.30.0 git --config ./.github/linters/gitleaks-config.toml -v
         continue-on-error: true
