@@ -128,7 +128,7 @@ jobs:
         id: gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # Only required for Organizations, not personal accounts.
           GITLEAKS_CONFIG: ./gitleaks-config.toml
           GITLEAKS_ENABLE_COMMENTS: true
@@ -214,7 +214,7 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: thollander/actions-comment-pull-request@v3
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GH_TOKEN }}
           comment-tag: coverage-report
           message: |
             go-test-coverage report:
